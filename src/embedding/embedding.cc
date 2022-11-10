@@ -6,36 +6,36 @@
 #include <utility>
 #include <vector>
 
-#include "src/apply-names.h"
-#include "src/binary-reader-ir.h"
-#include "src/binary-reader.h"
-#include "src/binary-writer-spec.h"
-#include "src/binary-writer.h"
-#include "src/common.h"
-#include "src/error-formatter.h"
-#include "src/feature.h"
-#include "src/filenames.h"
-#include "src/generate-names.h"
-#include "src/ir.h"
-#include "src/stream.h"
-#include "src/validator.h"
-#include "src/wast-lexer.h"
-#include "src/wast-parser.h"
-#include "src/wat-writer.h"
+#include "wabt/apply-names.h"
+#include "wabt/binary-reader-ir.h"
+#include "wabt/binary-reader.h"
+#include "wabt/binary-writer-spec.h"
+#include "wabt/binary-writer.h"
+#include "wabt/common.h"
+#include "wabt/error-formatter.h"
+#include "wabt/feature.h"
+#include "wabt/filenames.h"
+#include "wabt/generate-names.h"
+#include "wabt/ir.h"
+#include "wabt/stream.h"
+#include "wabt/validator.h"
+#include "wabt/wast-lexer.h"
+#include "wabt/wast-parser.h"
+#include "wabt/wat-writer.h"
 
-#include "src/embedding/wabt.h"
+#include "./wabt.h"
 
 void bindings_wat2wasm(bindings_string_t* wat,
                        bindings_wasm_feature_t features,
                        bindings_expected_list_u8_string_t* ret0) {
+  wabt::Errors* errors = new wabt::Errors();
   std::unique_ptr<wabt::WastLexer> lexer =
-      wabt::WastLexer::CreateBufferLexer("", wat->ptr, wat->len);
+      wabt::WastLexer::CreateBufferLexer("", wat->ptr, wat->len, errors);
   wabt::Features* wabtfeatures = new wabt::Features();
 
   wabt::WastLexer* finalLexer = lexer.release();
   wabt::WastParseOptions options(*wabtfeatures);
   std::unique_ptr<wabt::Module> module;
-  wabt::Errors* errors = new wabt::Errors();
   wabt::Result parseResult =
       wabt::ParseWatModule(finalLexer, &module, errors, &options);
 
