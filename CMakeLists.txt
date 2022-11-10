@@ -526,12 +526,6 @@ if (BUILD_TOOLS)
       INSTALL
     )
   endif ()
-  # wasm2c
-  wabt_executable(
-    NAME wasm2c
-    SOURCES src/tools/wasm2c.cc
-    INSTALL
-  )
 
   # wasm-opcodecnt
   wabt_executable(
