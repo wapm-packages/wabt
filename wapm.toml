@@ -1,6 +1,6 @@
 [package]
 name = "wasmer/wabt"
-version = "1.0.29"
+version = "1.0.30"
 description = "The WebAssembly Binary Toolkit"
 readme = "README-wapm.md"
 repository = "https://github.com/wapm-packages/wabt"
@@ -9,44 +9,44 @@ repository = "https://github.com/wapm-packages/wabt"
 name = "wabt"
 source = "out/wasi/Debug/libwabt.wasm"
 abi = "wasi"
-interfaces = {wasi= "0.1.0-unstable"}
+interfaces = { wasi = "0.1.0-unstable" }
 bindings = { wit-exports = "src/embedding/bindings.wit", wit-bindgen = "0.1.0" }
 
 [[module]]
 name = "wat2wasm"
 source = "out/wasi/Debug/wat2wasm"
 abi = "wasi"
-interfaces = {wasi= "0.1.0-unstable"}
+interfaces = { wasi = "0.1.0-unstable" }
 
 [[module]]
 name = "wast2json"
 source = "out/wasi/Debug/wast2json"
 abi = "wasi"
-interfaces = {wasi= "0.1.0-unstable"}
+interfaces = { wasi = "0.1.0-unstable" }
 
 [[module]]
 name = "wasm2wat"
 source = "out/wasi/Debug/wasm2wat"
 abi = "wasi"
-interfaces = {wasi= "0.1.0-unstable"}
+interfaces = { wasi = "0.1.0-unstable" }
 
 [[module]]
 name = "wasm-interp"
 source = "out/wasi/Debug/wasm-interp"
 abi = "wasi"
-interfaces = {wasi= "0.1.0-unstable"}
+interfaces = { wasi = "0.1.0-unstable" }
 
 [[module]]
 name = "wasm-validate"
 source = "out/wasi/Debug/wasm-validate"
 abi = "wasi"
-interfaces = {wasi= "0.1.0-unstable"}
+interfaces = { wasi = "0.1.0-unstable" }
 
 [[module]]
 name = "wasm-strip"
 source = "out/wasi/Debug/wasm-strip"
 abi = "wasi"
-interfaces = {wasi= "0.1.0-unstable"}
+interfaces = { wasi = "0.1.0-unstable" }
 
 # The commands for each module
 [[command]]
