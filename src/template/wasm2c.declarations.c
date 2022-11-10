@@ -1,16 +1,16 @@
 
 #define TRAP(x) (wasm_rt_trap(WASM_RT_TRAP_##x), 0)
 
-#if WASM_RT_MEMCHECK_SIGNAL_HANDLER
-#define FUNC_PROLOGUE
-
-#define FUNC_EPILOGUE
-#else
+#if WASM_RT_USE_STACK_DEPTH_COUNT
 #define FUNC_PROLOGUE                                            \
   if (++wasm_rt_call_stack_depth > WASM_RT_MAX_CALL_STACK_DEPTH) \
     TRAP(EXHAUSTION);
 
 #define FUNC_EPILOGUE --wasm_rt_call_stack_depth
+#else
+#define FUNC_PROLOGUE
+
+#define FUNC_EPILOGUE
 #endif
 
 #define UNREACHABLE TRAP(UNREACHABLE)
@@ -121,8 +121,6 @@ DEFINE_STORE(i64_store16, u16, u64)
 DEFINE_STORE(i64_store32, u32, u64)
 
 #if defined(_MSC_VER)
-
-#define alloca _alloca
 
 // Adapted from
 // https://github.com/nemequ/portable-snippets/blob/master/builtin/builtin.h
@@ -443,5 +441,109 @@ static float wasm_sqrtf(float x) {
   }
   return sqrtf(x);
 }
+
+static inline void memory_fill(wasm_rt_memory_t* mem, u32 d, u32 val, u32 n) {
+  RANGE_CHECK(mem, d, n);
+  memset(mem->data + d, val, n);
+}
+
+static inline void memory_copy(wasm_rt_memory_t* dest,
+                               const wasm_rt_memory_t* src,
+                               u32 dest_addr,
+                               u32 src_addr,
+                               u32 n) {
+  RANGE_CHECK(dest, dest_addr, n);
+  RANGE_CHECK(src, src_addr, n);
+  memmove(dest->data + dest_addr, src->data + src_addr, n);
+}
+
+static inline void memory_init(wasm_rt_memory_t* dest,
+                               const u8* src,
+                               u32 src_size,
+                               u32 dest_addr,
+                               u32 src_addr,
+                               u32 n) {
+  if (UNLIKELY(src_addr + (uint64_t)n > src_size))
+    TRAP(OOB);
+  LOAD_DATA((*dest), dest_addr, src + src_addr, n);
+}
+
+typedef struct {
+  uint32_t func_type_index;
+  wasm_rt_function_ptr_t func;
+  size_t module_offset;
+} wasm_elem_segment_expr_t;
+
+static inline void funcref_table_init(wasm_rt_funcref_table_t* dest,
+                                      const wasm_elem_segment_expr_t* src,
+                                      u32 src_size,
+                                      u32 dest_addr,
+                                      u32 src_addr,
+                                      u32 n,
+                                      void* module_instance,
+                                      const u32* func_types) {
+  if (UNLIKELY(src_addr + (uint64_t)n > src_size))
+    TRAP(OOB);
+  if (UNLIKELY(dest_addr + (uint64_t)n > dest->size))
+    TRAP(OOB);
+  for (u32 i = 0; i < n; i++) {
+    const wasm_elem_segment_expr_t* src_expr = &src[src_addr + i];
+    dest->data[dest_addr + i] = (wasm_rt_funcref_t){
+        func_types[src_expr->func_type_index], src_expr->func,
+        (char*)module_instance + src_expr->module_offset};
+  }
+}
+
+#define DEFINE_TABLE_COPY(type)                                              \
+  static inline void type##_table_copy(wasm_rt_##type##_table_t* dest,       \
+                                       const wasm_rt_##type##_table_t* src,  \
+                                       u32 dest_addr, u32 src_addr, u32 n) { \
+    if (UNLIKELY(dest_addr + (uint64_t)n > dest->size))                      \
+      TRAP(OOB);                                                             \
+    if (UNLIKELY(src_addr + (uint64_t)n > src->size))                        \
+      TRAP(OOB);                                                             \
+                                                                             \
+    memmove(dest->data + dest_addr, src->data + src_addr,                    \
+            n * sizeof(wasm_rt_##type##_t));                                 \
+  }
+
+DEFINE_TABLE_COPY(funcref)
+DEFINE_TABLE_COPY(externref)
+
+#define DEFINE_TABLE_GET(type)                        \
+  static inline wasm_rt_##type##_t type##_table_get(  \
+      const wasm_rt_##type##_table_t* table, u32 i) { \
+    if (UNLIKELY(i >= table->size))                   \
+      TRAP(OOB);                                      \
+    return table->data[i];                            \
+  }
+
+DEFINE_TABLE_GET(funcref)
+DEFINE_TABLE_GET(externref)
+
+#define DEFINE_TABLE_SET(type)                                               \
+  static inline void type##_table_set(const wasm_rt_##type##_table_t* table, \
+                                      u32 i, const wasm_rt_##type##_t val) { \
+    if (UNLIKELY(i >= table->size))                                          \
+      TRAP(OOB);                                                             \
+    table->data[i] = val;                                                    \
+  }
+
+DEFINE_TABLE_SET(funcref)
+DEFINE_TABLE_SET(externref)
+
+#define DEFINE_TABLE_FILL(type)                                               \
+  static inline void type##_table_fill(const wasm_rt_##type##_table_t* table, \
+                                       u32 d, const wasm_rt_##type##_t val,   \
+                                       u32 n) {                               \
+    if (UNLIKELY((uint64_t)d + n > table->size))                              \
+      TRAP(OOB);                                                              \
+    for (uint32_t i = d; i < d + n; i++) {                                    \
+      table->data[i] = val;                                                   \
+    }                                                                         \
+  }
+
+DEFINE_TABLE_FILL(funcref)
+DEFINE_TABLE_FILL(externref)
 
 static bool s_module_initialized = false;

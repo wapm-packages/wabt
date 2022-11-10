@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/shared-validator.h"
+#include "wabt/shared-validator.h"
 
 #include <algorithm>
 #include <cinttypes>
@@ -909,10 +909,11 @@ Result SharedValidator::OnMemoryCopy(const Location& loc,
                                      Var srcmemidx,
                                      Var destmemidx) {
   Result result = CheckInstr(Opcode::MemoryCopy, loc);
-  MemoryType mt;
-  result |= CheckMemoryIndex(srcmemidx, &mt);
-  result |= CheckMemoryIndex(destmemidx, &mt);
-  result |= typechecker_.OnMemoryCopy(mt.limits);
+  MemoryType srcmt;
+  MemoryType dstmt;
+  result |= CheckMemoryIndex(srcmemidx, &srcmt);
+  result |= CheckMemoryIndex(destmemidx, &dstmt);
+  result |= typechecker_.OnMemoryCopy(srcmt.limits, dstmt.limits);
   return result;
 }
 

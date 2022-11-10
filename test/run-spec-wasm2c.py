@@ -86,7 +86,7 @@ def F64ToC(f64_bits):
 
 def MangleType(t):
     return {'i32': 'i', 'i64': 'j', 'f32': 'f', 'f64': 'd',
-            'externref': 'e', 'funcref': 'f'}[t]
+            'externref': 'e', 'funcref': 'r'}[t]
 
 
 def MangleTypes(types):
@@ -122,6 +122,7 @@ class CWriter(object):
         self.module_name_to_idx = {}
         self.module_prefix_map = {}
         self.unmangled_names = {}
+        self.idx_to_module_name = {}
         self._MaybeWriteDummyModule()
         self._CacheModulePrefixes()
 
@@ -162,6 +163,7 @@ class CWriter(object):
 
                 if 'name' in command:
                     self.module_name_to_idx[command['name']] = idx
+                    self.idx_to_module_name[idx] = command['name']
                     self.module_prefix_map[command['name']] = name
 
                 idx += 1
@@ -173,6 +175,8 @@ class CWriter(object):
                 else:
                     name_idx = idx - 1
 
+                if name_idx in self.idx_to_module_name:
+                    self.module_prefix_map[self.idx_to_module_name[name_idx]] = name
                 self.module_prefix_map[name_idx] = name
                 self.unmangled_names[name_idx] = command['as']
 
@@ -327,9 +331,15 @@ class CWriter(object):
         elif type_ == 'f64':
             return F64ToC(int(value))
         elif type_ == 'externref':
-            return 'externref(%s)' % value
+            if value == 'null':
+                return 'wasm_rt_externref_null_value'
+            else:
+                return 'spectest_make_externref(%s)' % value
         elif type_ == 'funcref':
-            return 'funcref(%s)' % value
+            if value == 'null':
+                return 'wasm_rt_funcref_null_value'
+            else:
+                assert False  # can't make an arbitrary funcref from an integer value
         else:
             assert False
 
@@ -453,6 +463,7 @@ def main(args):
     parser.add_argument('--enable-multi-memory', action='store_true')
     parser.add_argument('--disable-bulk-memory', action='store_true')
     parser.add_argument('--disable-reference-types', action='store_true')
+    parser.add_argument('--debug-names', action='store_true')
     options = parser.parse_args(args)
 
     with utils.TempDirectory(options.out_dir, 'run-spec-wasm2c-') as out_dir:
@@ -466,7 +477,8 @@ def main(args):
             '--enable-exceptions': options.enable_exceptions,
             '--enable-multi-memory': options.enable_multi_memory,
             '--disable-bulk-memory': options.disable_bulk_memory,
-            '--disable-reference-types': options.disable_reference_types})
+            '--disable-reference-types': options.disable_reference_types,
+            '--debug-names': options.debug_names})
 
         json_file_path = utils.ChangeDir(
             utils.ChangeExt(options.file, '.json'), out_dir)
