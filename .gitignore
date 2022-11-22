@@ -1,8 +1,8 @@
 /bin
 /build
-/out
 /fuzz-out
 /emscripten
+/out
 *.pyc
 .idea/
 .vscode/
