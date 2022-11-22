@@ -69,6 +69,7 @@ option(WABT_INSTALL_RULES "Include WABT's install() rules" "${PROJECT_IS_TOP_LEV
 # WASI support is still a work in progress.
 # Only a handful of syscalls are supported at this point.
 option(WITH_WASI "Build WASI support via uvwasi" OFF)
+option(WASI "Build in WASI MODE" OFF)
 
 if (MSVC)
   set(COMPILER_IS_CLANG 0)
@@ -86,6 +87,13 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   set(COMPILER_IS_CLANG 1)
   set(COMPILER_IS_GNU 0)
   set(COMPILER_IS_MSVC 0)
+elseif (CMAKE_SYSTEM_NAME STREQUAL "WASI")
+  set(COMPILER_IS_CLANG 1)
+  set(COMPILER_IS_GNU 0)
+  set(COMPILER_IS_MSVC 0)
+  set(WASI 1)
+  set(BUILD_TESTS OFF)
+  set(WABT_INSTALL_RULES OFF)
 else ()
   set(COMPILER_IS_CLANG 0)
   set(COMPILER_IS_GNU 0)
@@ -382,13 +390,15 @@ if (WABT_INSTALL_RULES)
   )
 endif ()
 
-add_library(wasm-rt-impl STATIC wasm2c/wasm-rt-impl.c wasm2c/wasm-rt-impl.h)
-add_library(wabt::wasm-rt-impl ALIAS wasm-rt-impl)
-if (WABT_BIG_ENDIAN)
-  target_compile_definitions(wasm-rt-impl PUBLIC WABT_BIG_ENDIAN=1)
+if (NOT WASI)
+  add_library(wasm-rt-impl STATIC wasm2c/wasm-rt-impl.c wasm2c/wasm-rt-impl.h)
+  add_library(wabt::wasm-rt-impl ALIAS wasm-rt-impl)
+  if (WABT_BIG_ENDIAN)
+    target_compile_definitions(wasm-rt-impl PUBLIC WABT_BIG_ENDIAN=1)
+  endif ()
 endif ()
 
-if (WABT_INSTALL_RULES)
+if (WABT_INSTALL_RULES AND NOT WASI)
   install(
     TARGETS wasm-rt-impl
     EXPORT wabt-targets
@@ -726,6 +736,36 @@ if (WABT_INSTALL_RULES AND (BUILD_TOOLS OR BUILD_TESTS))
     )
   endif ()
 endif ()
+
+if (WASI)
+  # exceptions are never needed
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
+
+  # libwabt.wasm
+
+  # just dump everything into one binary so we can reference it from JavaScript
+  # add_definitions(-Wno-warn-absolute-paths)
+  add_executable(libwabt src/embedding/embedding.cc src/embedding/wabt.c)
+  add_dependencies(everything libwabt)
+  target_link_libraries(libwabt wabt)
+  
+  set_target_properties(libwabt
+    PROPERTIES
+    OUTPUT_NAME libwabt.wasm
+  )
+
+  set(LIBWABT_LINK_FLAGS
+    -fno-exceptions
+    -mexec-model=reactor
+    -Oz
+  )
+  string(REPLACE ";" " " LIBWABT_LINK_FLAGS_STR "${LIBWABT_LINK_FLAGS}")
+
+  set_target_properties(libwabt
+    PROPERTIES
+    LINK_FLAGS "${LIBWABT_LINK_FLAGS_STR}"
+  )
+endif()
 
 if (EMSCRIPTEN)
   # flags for all emscripten builds
