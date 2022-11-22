@@ -148,3 +148,23 @@ jobs:
       run: cmake --build out --target run-c-api-tests
     - name: tests
       run: cmake --build out --target run-tests
+
+  build-wasm-wasi:
+    name: wasm-wasi
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - run: sudo apt-get install ninja-build
+    - name: mkdir
+      run: mkdir -p out
+    - name: Configure WABT
+      run: wasix-make cmake .. -DCMAKE_BUILD_TYPE=Release
+      working-directory: out
+    - name: build
+      run: make -j8
+      working-directory: out
