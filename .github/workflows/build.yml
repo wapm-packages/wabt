@@ -165,7 +165,7 @@ jobs:
     - name: mkdir
       run: mkdir -p out
     - name: Configure WABT
-      run: wasix-make cmake .. -DCMAKE_BUILD_TYPE=Release
+      run: wasix-make cmake .. -DCMAKE_BUILD_TYPE=Release -DWASI=ON
       working-directory: out
     - name: build
       run: make -j8
