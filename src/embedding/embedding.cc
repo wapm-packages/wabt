@@ -25,9 +25,9 @@
 
 #include "./wabt.h"
 
-void bindings_wat2wasm(bindings_string_t* wat,
-                       bindings_wasm_feature_t features,
-                       bindings_expected_list_u8_string_t* ret0) {
+void wabt_wat2wasm(wabt_string_t* wat,
+                       wabt_wasm_feature_t features,
+                       wabt_expected_list_u8_string_t* ret0) {
   wabt::Errors* errors = new wabt::Errors();
   std::unique_ptr<wabt::WastLexer> lexer =
       wabt::WastLexer::CreateBufferLexer("", wat->ptr, wat->len, errors);
@@ -47,7 +47,7 @@ void bindings_wat2wasm(bindings_string_t* wat,
     // std::string string_result = FormatErrorsToString(
     //     *errors, wabt::Location::Type::Text, line_finder.get());
     ret0->is_err = true;
-    bindings_string_set(&ret0->val.err, string_result.c_str());
+    wabt_string_set(&ret0->val.err, string_result.c_str());
     return;
   }
   wabt::Module* moduleFinal = module.get();
@@ -65,7 +65,7 @@ void bindings_wat2wasm(bindings_string_t* wat,
     std::unique_ptr<wabt::OutputBuffer> output_buffer;
     output_buffer = stream.ReleaseOutputBuffer();
     ret0->is_err = false;
-    bindings_list_u8_t okval;
+    wabt_list_u8_t okval;
     wabt::OutputBuffer* realOut = output_buffer.release();
     okval.ptr = realOut->data.data();
     okval.len = realOut->data.size();
@@ -77,9 +77,9 @@ void bindings_wat2wasm(bindings_string_t* wat,
   }
 }
 
-void bindings_wasm2wat(bindings_list_u8_t* wasm,
-                       bindings_wasm_feature_t features,
-                       bindings_expected_string_string_t* ret0) {
+void wabt_wasm2wat(wabt_list_u8_t* wasm,
+                       wabt_wasm_feature_t features,
+                       wabt_expected_string_string_t* ret0) {
   wabt::ReadBinaryOptions options;
   wabt::Features* wabtfeatures;
   wabtfeatures = new wabt::Features();
@@ -98,7 +98,7 @@ void bindings_wasm2wat(bindings_list_u8_t* wasm,
     std::string string_result =
         FormatErrorsToString(*errors, wabt::Location::Type::Binary);
     ret0->is_err = true;
-    bindings_string_set(&ret0->val.err, string_result.c_str());
+    wabt_string_set(&ret0->val.err, string_result.c_str());
     return;
   }
 
@@ -110,12 +110,12 @@ void bindings_wasm2wat(bindings_list_u8_t* wasm,
   wabt::Result watResult;
   watResult = WriteWat(&stream, module, watoptions);
   if (watResult == wabt::Result::Ok) {
-    bindings_string_t okval;
+    wabt_string_t okval;
     std::unique_ptr<wabt::OutputBuffer> output_buffer;
     output_buffer = stream.ReleaseOutputBuffer();
     wabt::OutputBuffer* realOut = output_buffer.release();
     std::string string_result(realOut->data.begin(), realOut->data.end());
-    bindings_string_set(&okval, string_result.c_str());
+    wabt_string_set(&okval, string_result.c_str());
     ret0->is_err = false;
     ret0->val.ok = okval;
     return;

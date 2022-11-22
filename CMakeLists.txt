@@ -31,6 +31,8 @@ if (WASI)
   set(CMAKE_SYSTEM_VERSION 1)
   set(CMAKE_SYSTEM_PROCESSOR wasm32)
   set(triple wasm32-wasi)
+  set(CMAKE_VERBOSE_MAKEFILE ON)
+
 
   set(CMAKE_C_COMPILER_TARGET ${triple})
   set(CMAKE_CXX_COMPILER_TARGET ${triple})
@@ -745,23 +747,24 @@ if (WASI)
   # flags for all emscripten builds
 
   # exceptions are never needed
-  # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -mexec-model=reactor")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
+  # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
 
   # libwabt.wasm
 
   # just dump everything into one binary so we can reference it from JavaScript
-  add_definitions(-Wno-warn-absolute-paths)
-  add_executable(libwabt src/embedding/wabt.c src/embedding/embedding.cc)
-  #set_source_files_properties(src/embedding/bindings.cc PROPERTIES CMAKE_CXX_FLAGS -mexec-model=reactor)
-  # set_source_files_properties( src/embedding/bindings.cc PROPERTIES COMPILE_FLAGS "-mexec-model=reactor" )
+  # add_definitions(-Wno-warn-absolute-paths)
+  add_executable(libwabt src/embedding/embedding.cc src/embedding/wabt.c)
+  set_source_files_properties(src/embedding/embedding.cc PROPERTIES CMAKE_CXX_FLAGS -mexec-model=reactor)
+  set_source_files_properties( src/embedding/embedding.cc PROPERTIES COMPILE_FLAGS "-mexec-model=reactor" )
   # SET_TARGET_PROPERTIES( libwabt PROPERTIES CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -mexec-model=reactor" )
   # set_property(TARGET libwabt PROPERTY CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -mexec-model=reactor")
   add_dependencies(everything libwabt)
   target_link_libraries(libwabt wabt)
+  
   set_target_properties(libwabt
     PROPERTIES
-    COMPILE_OPTIONS "-fno-exceptions -mexec-model=reactor"
+    # COMPILE_OPTIONS "-fno-exceptions -mexec-model=reactor"
     OUTPUT_NAME libwabt.wasm
     COMPILE_FLAGS "-fno-exceptions -mexec-model=reactor"
     CMAKE_CXX_FLAGS "-fno-exceptions -mexec-model=reactor"

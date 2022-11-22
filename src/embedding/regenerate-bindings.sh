@@ -1,10 +1,7 @@
 #!/bin/sh
 
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-cd $SCRIPT_DIR
-
-wit-bindgen c --export bindings.wit --out-dir $SCRIPT_DIR
+wasmer run wasmer/wai-bindgen-cli --dir=. -- c --export wabt.wit 
 
 # Note: WABT has set up the include path so all #includes need to be relative to
 # the project root
