@@ -160,6 +160,8 @@ jobs:
       with:
         python-version: '3.x'
     - run: sudo apt-get install ninja-build
+    - name: wasix
+      run: python -m pip install wasix
     - name: mkdir
       run: mkdir -p out
     - name: Configure WABT
