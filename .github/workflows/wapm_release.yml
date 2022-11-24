@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-python@v1
         with:
           python-version: "3.x"
-      - run: sudo apt-get install ninja-build binaryen
+      - run: sudo apt-get install ninja-build binaryen wabt
       - name: wasix
         run: python -m pip install wasix
       - name: mkdir
