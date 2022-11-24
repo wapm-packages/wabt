@@ -1,7 +1,7 @@
 #!/bin/sh
 
 
-wasmer run wasmer/wai-bindgen-cli --dir=. -- c --export wabt.wit 
+wasmer run wasmer/wai-bindgen-cli --dir=. -- c --export wabt.wai 
 
 # Note: WABT has set up the include path so all #includes need to be relative to
 # the project root

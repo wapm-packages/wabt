@@ -1,6 +1,4 @@
 
-let DATA_VIEW = new DataView(new ArrayBuffer());
-
 export class UnexpectedError extends Error {
     constructor(message) {
       super(message);
@@ -8,6 +6,9 @@ export class UnexpectedError extends Error {
     }
   }
   
+
+export let DATA_VIEW = new DataView(new ArrayBuffer());
+
 export function data_view(mem) {
   if (DATA_VIEW.buffer !== mem.buffer) DATA_VIEW = new DataView(mem.buffer);
   return DATA_VIEW;
@@ -20,8 +21,7 @@ export function validate_flags(flags, mask) {
   return flags;
 }
 export const UTF8_DECODER = new TextDecoder('utf-8');
-
-const UTF8_ENCODER = new TextEncoder('utf-8');
+export const UTF8_ENCODER = new TextEncoder('utf-8');
 
 export function utf8_encode(s, realloc, memory) {
   if (typeof s !== 'string') throw new TypeError('expected a string');
@@ -49,4 +49,10 @@ export function utf8_encode(s, realloc, memory) {
   UTF8_ENCODED_LEN = writtenTotal;
   return ptr;
 }
+
 export let UTF8_ENCODED_LEN = 0;
+
+export function utf8_encoded_len() {
+  return UTF8_ENCODED_LEN;
+}
+

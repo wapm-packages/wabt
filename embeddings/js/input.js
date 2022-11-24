@@ -1,4 +1,4 @@
-import { data_view, validate_flags, utf8_encode, UTF8_ENCODED_LEN, UTF8_DECODER, UnexpectedError } from './intrinsics.js';
+import { data_view, validate_flags, utf8_encode, UTF8_DECODER, UnexpectedError } from './intrinsics.js';
 export const WASM_FEATURE_EXCEPTIONS = 1;
 export const WASM_FEATURE_MUTABLE_GLOBALS = 2;
 export const WASM_FEATURE_SAT_FLOAT_TO_INT = 4;
@@ -74,35 +74,43 @@ export class WABT {
       throw new RangeError("invalid variant discriminant for expected");
     }
   }
-  wasm2wat(arg0, arg1) {
+  wasm2wat(arg0, arg1, arg2, arg3) {
     const memory = this._exports.memory;
     const realloc = this._exports["canonical_abi_realloc"];
     const free = this._exports["canonical_abi_free"];
     const val0 = arg0;
     const len0 = val0.length;
     const ptr0 = realloc(0, 0, 1, len0 * 1);
-    (new Uint8Array(memory.buffer, ptr0, len0 * 1)).set(new Uint8Array(val0.buffer));
-    const ret = this._exports['wasm2wat'](ptr0, len0, validate_flags(arg1, 4095));
-    let variant3;
-    switch (data_view(memory).getInt32(ret + 0, true)) {
+    (new Uint8Array(memory.buffer, ptr0, len0 * 1)).set(new Uint8Array(val0.buffer, val0.byteOffset, len0 * 1));
+    const flags1 = validate_flags(arg1, 4095);
+    const ret = this._exports['wasm2wat'](ptr0, len0, flags1);
+    
+    let variant4;
+    switch (data_view(memory).getUint8(ret + 0, true)) {
       case 0: {
-        const ptr1 = data_view(memory).getInt32(ret + 8, true);
-        const len1 = data_view(memory).getInt32(ret + 16, true);
-        const list1 = UTF8_DECODER.decode(new Uint8Array(memory.buffer, ptr1, len1));
-        free(ptr1, len1, 1);
-        return list1;
-      }
-      case 1: {
-        const ptr2 = data_view(memory).getInt32(ret + 8, true);
-        const len2 = data_view(memory).getInt32(ret + 16, true);
+        const ptr2 = data_view(memory).getInt32(ret + 4, true);
+        const len2 = data_view(memory).getInt32(ret + 8, true);
+        console.log(ptr2, len2);
         const list2 = UTF8_DECODER.decode(new Uint8Array(memory.buffer, ptr2, len2));
         free(ptr2, len2, 1);
-        throw new UnexpectedError(list2);
+        
+        variant4 = { tag: "ok", val: list2 };
+        break;
       }
-      default:
-      throw new RangeError("invalid variant discriminant for expected");
+      case 1: {
+        const ptr3 = data_view(memory).getInt32(ret + 4, true);
+        const len3 = data_view(memory).getInt32(ret + 8, true);
+        const list3 = UTF8_DECODER.decode(new Uint8Array(memory.buffer, ptr3, len3));
+        free(ptr3, len3, 1);
+        
+        variant4 = { tag: "err", val: list3 };
+        break;
+      }
+      default: {
+        throw new RangeError("invalid variant discriminant for expected");
+      }
     }
-    return variant3;
+    return variant4;
   }
 
 }

@@ -1,12 +1,6 @@
 # WABT: The WebAssembly Binary Toolkit
 
-You can install The WebAssembly Binary Toolkit with:
-
-```shell
-wapm install wabt
-```
-
-wabt includes commands like:
+wabt includes the following commands:
 
  - **wat2wasm**
  - **wasm2wat**
@@ -23,14 +17,14 @@ Translate from [WebAssembly text format](https://webassembly.github.io/spec/core
 
 ```shell
 # parse and typecheck test.wat
-$ wapm run wat2wasm test.wat
+$ wasmer run wasmer/wat2wasm test.wat
 
 # parse test.wat and write to binary file test.wasm
-$ wapm run wat2wasm test.wat -o test.wasm
+$ wasmer run wasmer/wat2wasm test.wat -o test.wasm
 
 # parse spec-test.wast, and write verbose output to stdout (including the
 # meaning of every byte)
-$ wapm run wat2wasm spec-test.wast -v
+$ wasmer run wasmer/wat2wasm spec-test.wast -v
 ```
 
 ### wasm2wat
@@ -39,14 +33,14 @@ The inverse of wat2wasm, translate from the binary format back to the text forma
 
 ```shell
 # parse and typecheck test.wat
-$ wapm run wat2wasm test.wat
+$ wasmer run wasmer/wat2wasm test.wat
 
 # parse test.wat and write to binary file test.wasm
-$ wapm run wat2wasm test.wat -o test.wasm
+$ wasmer run wasmer/wat2wasm test.wat -o test.wasm
 
 # parse spec-test.wast, and write verbose output to stdout (including the
 # meaning of every byte)
-$ wapm run wat2wasm spec-test.wast -v
+$ wasmer run wasmer/wat2wasm spec-test.wast -v
 ```
 
 ### wasm-validate
@@ -55,7 +49,7 @@ Validate a file in the WebAssembly binary format
 
 ```shell
 # Validates the WebAssembly file
-$ wapm run wasm-validate test.wasm
+$ wasmer run wasmer/wasm-validate test.wasm
 ```
 
 ### wasm-strip
@@ -64,7 +58,7 @@ Remove sections of a WebAssembly binary file
 
 ```shell
 # Validates the WebAssembly file
-$ wapm run wasm-strip test.wasm
+$ wasmer run wasmer/wasm-strip test.wasm
 ```
 
 ### wast2json
@@ -74,7 +68,7 @@ wast2json converts a file in the wasm spec test format to a JSON file and associ
 ```shell
 # parse spec-test.wast, and write files to spec-test.json. Modules are written
 # to spec-test.0.wasm, spec-test.1.wasm, etc.
-$ wapm run wast2json spec-test.wast -o spec-test.json
+$ wasmer run wasmer/wast2json spec-test.wast -o spec-test.json
 ```
 
 
