@@ -1,24 +1,26 @@
-from wasmer import Store, Module, Instance
+from wasmer import Instance
 from intrinsics import encode_utf8, decode_utf8
 from enum import IntFlag
 
-class WasmFeature(IntFlag):
-    Exceptions=1
-    MutableGlobals=2
-    SatFloatToInt=4
-    SignExtension=8
-    SIMD=16
-    Threads=32
-    MultiValue=64
-    TailCall=128
-    BulkMemory=256
-    ReferenceTypes=512
-    Annotations=1024
-    GC=2048
 
-    Phase5=1|2|4|8|16|BulkMemory|ReferenceTypes
-    Phase4=Phase5
-    Phase3=Phase4|MultiValue|TailCall|Annotations
+class WasmFeature(IntFlag):
+    Exceptions = 1
+    MutableGlobals = 2
+    SatFloatToInt = 4
+    SignExtension = 8
+    SIMD = 16
+    Threads = 32
+    MultiValue = 64
+    TailCall = 128
+    BulkMemory = 256
+    ReferenceTypes = 512
+    Annotations = 1024
+    GC = 2048
+
+    Phase5 = 1 | 2 | 4 | 8 | 16 | BulkMemory | ReferenceTypes
+    Phase4 = Phase5
+    Phase3 = Phase4 | MultiValue | TailCall | Annotations
+
 
 class WABT:
     def instantiate(self, module, imports):
@@ -32,7 +34,7 @@ class WABT:
         len0 = len(val0)
         ptr0 = realloc(0, 0, 1, len0 * 1)
         buffer = memory.int8_view()
-        buffer[ptr0:ptr0+len0*1] = val0
+        buffer[ptr0 : ptr0 + len0 * 1] = val0
         ret = self.instance.exports.wasm2wat(ptr0, len0, flags)
         ret = int(ret / 4)
         buf32 = memory.int32_view()
@@ -61,7 +63,7 @@ class WABT:
             ptr1 = buf32[ret + 2]
             len1 = buf32[ret + 4]
             buf8 = memory.int8_view()
-            wasm = bytearray(buf8[ptr1:ptr1+len1])
+            wasm = bytearray(buf8[ptr1 : ptr1 + len1])
             free(ptr1, len1, 1)
             return wasm
         elif buf32[ret] == 1:
