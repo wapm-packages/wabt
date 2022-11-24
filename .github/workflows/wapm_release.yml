@@ -20,9 +20,9 @@ jobs:
       - run: sudo apt-get install ninja-build binaryen wabt
       - name: wasix
         run: python -m pip install wasix
-      - name: mkdir
       - name: Setup Wasmer
         uses: wasmerio/setup-wasmer@v1
+      - name: mkdir
         run: mkdir -p out
       - name: Configure CMake
         run: wasix-make cmake .. -DCMAKE_BUILD_TYPE=Release -DWASI=ON
