@@ -30,7 +30,15 @@ jobs:
       - name: Build
         run: make -j8
         working-directory: out
-      - name: Publish
+      - name: Publish to wapm.dev
         uses: wasmerio/wapm-publish@v1
         with:
-          token: ${{ secrets.WAPM_PROD_TOKEN }}
+          username: ${{ secrets.WAPM_DEV_USERNAME }}
+          password: ${{ secrets.WAPM_DEV_PASSWORD }}
+          registry: https://registry.wapm.dev/
+      - name: Publish to wapm.io
+        uses: wasmerio/wapm-publish@v1
+        with:
+          username: ${{ secrets.WAPM_PROD_USERNAME }}
+          password: ${{ secrets.WAPM_PROD_PASSWORD }}
+          registry: https://registry.wapm.io/
