@@ -20,13 +20,13 @@ interfaces = { wasi = "0.1.0-unstable" }
 
 [[module]]
 name = "wast2json"
-source = "out/wat2wasm.wasm"
+source = "out/wast2json.wasm"
 abi = "wasi"
 interfaces = { wasi = "0.1.0-unstable" }
 
 [[module]]
 name = "wasm2wat"
-source = "out/wat2wasm.wasm"
+source = "out/wasm2wat.wasm"
 abi = "wasi"
 interfaces = { wasi = "0.1.0-unstable" }
 
