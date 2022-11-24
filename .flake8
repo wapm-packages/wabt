@@ -1,5 +1,6 @@
 [flake8]
 ignore =
   E501, # line too long
+  E203, # space before ":" is used for readability
   W504  # line break after binary operator
 exclude = ./third_party ./out

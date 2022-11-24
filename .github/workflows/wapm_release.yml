@@ -1,0 +1,36 @@
+name: WAPM Releases
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  release-wasm-wasi:
+    name: Publish to WAPM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          submodules: true
+      - uses: actions/setup-python@v1
+        with:
+          python-version: "3.x"
+      - run: sudo apt-get install ninja-build binaryen wabt
+      - name: wasix
+        run: python -m pip install wasix
+      - name: mkdir
+      - name: Setup Wasmer
+        uses: wasmerio/setup-wasmer@v1
+        run: mkdir -p out
+      - name: Configure CMake
+        run: wasix-make cmake .. -DCMAKE_BUILD_TYPE=Release -DWASI=ON
+        working-directory: out
+      - name: Build
+        run: make -j8
+        working-directory: out
+      - name: Publish
+        uses: wasmerio/wapm-publish@v1
+        with:
+          token: ${{ secrets.WAPM_PROD_TOKEN }}
