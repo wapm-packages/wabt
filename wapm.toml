@@ -1,6 +1,6 @@
 [package]
 name = "wasmer/wabt"
-version = "1.0.35"
+version = "1.0.36"
 description = "The WebAssembly Binary Toolkit"
 readme = "README-wapm.md"
 repository = "https://github.com/wapm-packages/wabt"

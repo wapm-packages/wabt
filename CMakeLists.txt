@@ -15,7 +15,7 @@
 #
 
 cmake_minimum_required(VERSION 3.16)
-project(WABT LANGUAGES C CXX VERSION 1.0.31)
+project(WABT LANGUAGES C CXX VERSION 1.0.36)
 
 include(GNUInstallDirs)
 
@@ -751,7 +751,7 @@ if (WASI)
   add_executable(libwabt src/embedding/embedding.cc src/embedding/wabt.c)
   add_dependencies(everything libwabt)
   target_link_libraries(libwabt wabt)
-  
+
   set_target_properties(libwabt
     PROPERTIES
     OUTPUT_NAME libwabt.wasm
