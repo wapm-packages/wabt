@@ -177,6 +177,10 @@ class BinaryReader {
   [[nodiscard]] Result ReadCustomSection(Index section_index,
                                          Offset section_size);
   [[nodiscard]] Result ReadTypeSection(Offset section_size);
+  [[nodiscard]] Result ReadImport(Index i,
+                                  std::string_view module_name,
+                                  std::string_view field_name,
+                                  ExternalKind kind);
   [[nodiscard]] Result ReadImportSection(Offset section_size);
   [[nodiscard]] Result ReadFunctionSection(Offset section_size);
   [[nodiscard]] Result ReadTableSection(Offset section_size);
@@ -2687,72 +2691,111 @@ Result BinaryReader::ReadTypeSection(Offset section_size) {
   return Result::Ok;
 }
 
+Result BinaryReader::ReadImport(Index i,
+                                std::string_view module_name,
+                                std::string_view field_name,
+                                ExternalKind kind) {
+  CALLBACK(OnImport, i, kind, module_name, field_name);
+  switch (kind) {
+    case ExternalKind::Func: {
+      Index sig_index;
+      CHECK_RESULT(ReadIndex(&sig_index, "import signature index"));
+      CALLBACK(OnImportFunc, i, module_name, field_name, num_func_imports_,
+               sig_index);
+      num_func_imports_++;
+      break;
+    }
+
+    case ExternalKind::Table: {
+      Limits elem_limits;
+      Type elem_type;
+      CHECK_RESULT(ReadRefType(&elem_type, "table elem type"));
+      CHECK_RESULT(ReadTable(&elem_limits));
+      CALLBACK(OnImportTable, i, module_name, field_name, num_table_imports_,
+               elem_type, &elem_limits);
+      num_table_imports_++;
+      break;
+    }
+
+    case ExternalKind::Memory: {
+      Limits page_limits;
+      uint32_t page_size;
+      CHECK_RESULT(ReadMemory(&page_limits, &page_size));
+      CALLBACK(OnImportMemory, i, module_name, field_name, num_memory_imports_,
+               &page_limits, page_size);
+      num_memory_imports_++;
+      break;
+    }
+
+    case ExternalKind::Global: {
+      Type type;
+      bool mutable_;
+      CHECK_RESULT(ReadGlobalHeader(&type, &mutable_));
+      CALLBACK(OnImportGlobal, i, module_name, field_name, num_global_imports_,
+               type, mutable_);
+      num_global_imports_++;
+      break;
+    }
+
+    case ExternalKind::Tag: {
+      Index sig_index;
+      ERROR_UNLESS(options_.features.exceptions_enabled(),
+                   "invalid import tag kind: exceptions not allowed");
+      CHECK_RESULT(ReadTagType(&sig_index));
+      CALLBACK(OnImportTag, i, module_name, field_name, num_tag_imports_,
+               sig_index);
+      num_tag_imports_++;
+      break;
+    }
+  }
+
+  return Result::Ok;
+}
+
 Result BinaryReader::ReadImportSection(Offset section_size) {
   CALLBACK(BeginImportSection, section_size);
   Index num_imports;
   CHECK_RESULT(ReadCount(&num_imports, "import count"));
   CALLBACK(OnImportCount, num_imports);
-  for (Index i = 0; i < num_imports; ++i) {
+  Index i = 0;
+  while (i < num_imports) {
     std::string_view module_name;
     CHECK_RESULT(ReadStr(&module_name, "import module name"));
     std::string_view field_name;
     CHECK_RESULT(ReadStr(&field_name, "import field name"));
 
+    uint8_t kind_u8;
+    CHECK_RESULT(ReadU8(&kind_u8, "import kind"));
+
     ExternalKind kind;
-    CHECK_RESULT(ReadExternalKind(&kind, "import kind", "import"));
-    CALLBACK(OnImport, i, kind, module_name, field_name);
-
-    switch (kind) {
-      case ExternalKind::Func: {
-        Index sig_index;
-        CHECK_RESULT(ReadIndex(&sig_index, "import signature index"));
-        CALLBACK(OnImportFunc, i, module_name, field_name, num_func_imports_,
-                 sig_index);
-        num_func_imports_++;
-        break;
+    if (field_name == "" && (kind_u8 == 0x7F || kind_u8 == 0x7E)) {
+      ERROR_UNLESS(options_.features.compact_imports_enabled(),
+                   "module uses compact imports, but feature not enabled");
+      Index num_compact_imports;
+      if (kind_u8 == 0x7E) {
+        // Read the import kind once and re-used for each of num_compact_imports
+        CHECK_RESULT(ReadExternalKind(&kind, "compact import kind", "import"));
+        CHECK_RESULT(ReadCount(&num_compact_imports, "compact import count"));
+        for (Index j = 0; j < num_compact_imports; ++j) {
+          CHECK_RESULT(ReadStr(&field_name, "compact import field name"));
+          CHECK_RESULT(ReadImport(i++, module_name, field_name, kind));
+        }
+      } else {
+        CHECK_RESULT(ReadCount(&num_compact_imports, "compact import count"));
+        for (Index j = 0; j < num_compact_imports; ++j) {
+          CHECK_RESULT(ReadStr(&field_name, "compact import field name"));
+          CHECK_RESULT(
+              ReadExternalKind(&kind, "compact import kind", "import"));
+          CHECK_RESULT(ReadImport(i++, module_name, field_name, kind));
+        }
       }
-
-      case ExternalKind::Table: {
-        Type elem_type;
-        Limits elem_limits;
-        CHECK_RESULT(ReadRefType(&elem_type, "table elem type"));
-        CHECK_RESULT(ReadTable(&elem_limits));
-        CALLBACK(OnImportTable, i, module_name, field_name, num_table_imports_,
-                 elem_type, &elem_limits);
-        num_table_imports_++;
-        break;
-      }
-
-      case ExternalKind::Memory: {
-        Limits page_limits;
-        uint32_t page_size;
-        CHECK_RESULT(ReadMemory(&page_limits, &page_size));
-        CALLBACK(OnImportMemory, i, module_name, field_name,
-                 num_memory_imports_, &page_limits, page_size);
-        num_memory_imports_++;
-        break;
-      }
-
-      case ExternalKind::Global: {
-        Type type;
-        bool mutable_;
-        CHECK_RESULT(ReadGlobalHeader(&type, &mutable_));
-        CALLBACK(OnImportGlobal, i, module_name, field_name,
-                 num_global_imports_, type, mutable_);
-        num_global_imports_++;
-        break;
-      }
-
-      case ExternalKind::Tag: {
-        ERROR_UNLESS(options_.features.exceptions_enabled(),
-                     "invalid import tag kind: exceptions not allowed");
-        Index sig_index;
-        CHECK_RESULT(ReadTagType(&sig_index));
-        CALLBACK(OnImportTag, i, module_name, field_name, num_tag_imports_,
-                 sig_index);
-        num_tag_imports_++;
-        break;
-      }
+    } else {
+      // Normal non-compact import
+      // kind_u8 was not one of the special values above so rewind one
+      // byte so we can read it with ReadExternalKind
+      state_.offset--;
+      CHECK_RESULT(ReadExternalKind(&kind, "import kind", "import"));
+      CHECK_RESULT(ReadImport(i++, module_name, field_name, kind));
     }
   }
 
