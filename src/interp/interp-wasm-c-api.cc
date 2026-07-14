@@ -741,8 +741,17 @@ own wasm_instance_t* wasm_instance_new(wasm_store_t* store,
   assert(module);
   assert(store);
 
+  // The caller must supply exactly as many imports as the module declares;
+  // reading imports->data[i] beyond imports->size would be out of bounds.
+  size_t import_count = module->As<Module>()->import_types().size();
+  if (imports->size != import_count) {
+    *trap_out = new wasm_trap_t{
+        Trap::New(store->I, "wrong number of imports provided")};
+    return nullptr;
+  }
+
   RefVec import_refs;
-  for (size_t i = 0; i < module->As<Module>()->import_types().size(); i++) {
+  for (size_t i = 0; i < import_count; i++) {
     import_refs.push_back(imports->data[i]->I->self());
   }
 
